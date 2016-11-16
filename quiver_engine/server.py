@@ -24,7 +24,13 @@ from layer_result_generators import get_outputs_generator
 
 def get_app(model, temp_folder='./tmp', input_folder='./'):
     get_evaluation_context = get_evaluation_context_getter()
-    single_input_shape = model.get_input_shape_at(0)[1:3]
+    if(model.get_input_shape_at(0)[1]==1):
+      grayscale = True
+      single_input_shape = model.get_input_shape_at(0)[2:4]
+    else:
+      single_input_shape = model.get_input_shape_at(0)[1:3]
+      grayscale = False
+    print('required input shape: ', single_input_shape)
 
     app = Flask(__name__)
     app.threaded = True
@@ -71,17 +77,18 @@ def get_app(model, temp_folder='./tmp', input_folder='./'):
     @app.route('/layer/<layer_name>/<input_path>')
     def get_layer_outputs(layer_name, input_path):
 
-        input_img = load_img(input_path, single_input_shape)
+        input_img = load_img(input_path, single_input_shape, grayscale)
         output_generator = get_outputs_generator(model, layer_name)
 
         with get_evaluation_context():
 
             layer_outputs = output_generator(input_img)[0]
             output_files = []
+            print('layer_output SHAPE: ', layer_outputs.shape)
 
-            for z in range(0, layer_outputs.shape[2]):
+            for z in range(0, layer_outputs.shape[0]):
 
-                img = layer_outputs[:, :, z]
+                img = layer_outputs[z, :, :]
                 deprocessed = deprocess_image(img)
                 filename = get_output_name(temp_folder, layer_name, input_path, z)
                 output_files.append(
@@ -95,7 +102,7 @@ def get_app(model, temp_folder='./tmp', input_folder='./'):
         return jsonify(output_files)
     @app.route('/predict/<input_path>')
     def get_prediction(input_path):
-        input_img = load_img(input_path, single_input_shape)
+        input_img = load_img(input_path, single_input_shape, grayscale)
         with get_evaluation_context():
             return jsonify(
                 json.loads(
@@ -122,7 +129,7 @@ def launch(model, temp_folder='./tmp', input_folder='./', port=5000):
     )
 
 def get_output_name(temp_folder, layer_name, input_path, z_idx):
-    return temp_folder + '/' + layer_name + '_' + str(z_idx) + '_' + input_path + '.png'
+    return temp_folder + '/' + layer_name + '_' + str(z_idx) + '_' + input_path + '.jpg'
 
 def get_evaluation_context_getter():
     if keras.backend.backend() == 'tensorflow':

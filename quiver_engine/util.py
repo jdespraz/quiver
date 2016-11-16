@@ -21,15 +21,16 @@ def deprocess_image(x):
 
     return x
 
-def load_img(input_path, target_shape):
-    img = image.load_img(input_path, target_size=target_shape)
+def load_img(input_path, target_shape, grayscale):
+    img = image.load_img(input_path, target_size=target_shape, grayscale=grayscale)
 
-    return preprocess_input(
-        np.expand_dims(
-            image.img_to_array(img),
-            axis=0
-        )
-    )
+    #return preprocess_input(
+    #    np.expand_dims(
+    #        image.img_to_array(img),
+    #        axis=0
+    #    )
+    #)
+    return np.expand_dims(image.img_to_array(img),axis=0)
 
 def get_json(obj):
     return json.dumps(obj, default=get_json_type)
