@@ -28,7 +28,7 @@ def get_app(model, temp_folder='./tmp', input_folder='./'):
       grayscale = True
       single_input_shape = model.get_input_shape_at(0)[2:4]
     else:
-      single_input_shape = model.get_input_shape_at(0)[1:3]
+      single_input_shape = model.get_input_shape_at(0)[2:4]
       grayscale = False
     print('required input shape: ', single_input_shape)
 
